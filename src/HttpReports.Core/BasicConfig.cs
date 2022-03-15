@@ -71,7 +71,7 @@ namespace HttpReports.Core
 
         public const string Language = "Language";
 
-        public const string DefaultLanguage = "en-us";
+        public const string DefaultLanguage = "zh-cn";
 
         public const string StaticFilesRoot = "HttpReports.Dashboard";
 
@@ -83,7 +83,7 @@ namespace HttpReports.Core
       
         public const string TransportType = "TransportType";
 
-        public const string TransportPath = "/DataTransportPath"; 
+        public const string HttpCollectorEndpoint = "/HttpReportsHttpCollector"; 
 
     }
 }

@@ -25,26 +25,26 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class DependencyInjectionExtensions
     { 
-        public static IHttpReportsBuilder AddHttpReportsDashboard(this IServiceCollection services)
+        public static IHttpReportsBuilder AddHttpReportsDashboard(this IServiceCollection services,IConfiguration configuration = null)
         {  
-            IConfiguration configuration = services.BuildServiceProvider().GetService<IConfiguration>().GetSection("HttpReportsDashboard"); 
+            IConfiguration config = configuration ?? services.BuildServiceProvider().GetService<IConfiguration>() ??
+                throw new ArgumentNullException(nameof(configuration)); 
+             
+            services.AddOptions().Configure<DashboardOptions>(config.GetSection("HttpReportsDashboard"));
 
-            services.AddOptions();
-            services.Configure<DashboardOptions>(configuration);
+            return services.UseHttpReportsDashboardService(config.GetSection("HttpReportsDashboard"));
 
-            return services.UseHttpReportsDashboardService(configuration);
-        } 
+        }
 
 
-
-        public static IHttpReportsBuilder AddHttpReportsDashboard(this IServiceCollection services,Action<DashboardOptions> options)
+        public static IHttpReportsBuilder AddHttpReportsDashboard(this IServiceCollection services,Action<DashboardOptions> options,IConfiguration configuration = null)
         {  
-            IConfiguration configuration = services.BuildServiceProvider().GetService<IConfiguration>().GetSection("HttpReportsDashboard");
+            IConfiguration config = configuration ?? services.BuildServiceProvider().GetService<IConfiguration>() ?? 
+               throw new ArgumentNullException(nameof(configuration)); 
+           
+            services.AddOptions().Configure<DashboardOptions>(options);
 
-            services.AddOptions();
-            services.Configure<DashboardOptions>(options);
-
-            return services.UseHttpReportsDashboardService(configuration);
+            return services.UseHttpReportsDashboardService(config.GetSection("HttpReportsDashboard"));
         }
 
 
@@ -111,30 +111,40 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             var options = app.ApplicationServices.GetRequiredService<IOptions<DashboardOptions>>() ?? throw new ArgumentNullException("DashboardOptions Init Failed");
 
-            if (options.Value.EnableCors)
-            {
-                app.UseCors(BasicConfig.Policy);
-            }
+            if (options.Value.EnableCors) app.UseCors(BasicConfig.Policy); 
 
             ServiceContainer.provider = app.ApplicationServices.GetRequiredService<IServiceProvider>() ?? throw new ArgumentNullException("ServiceProvider Init Failed");   
 
             var storage = app.ApplicationServices.GetRequiredService<IHttpReportsStorage>() ?? throw new ArgumentNullException("Storage Not Found");
 
-            storage.InitAsync().Wait();
+            if (options.Value.Migration) storage.InitAsync().Wait();
 
             app.ApplicationServices.GetService<IScheduleService>().InitAsync().Wait(); 
 
             var localizeService = app.ApplicationServices.GetRequiredService<ILocalizeService>() ?? throw new ArgumentNullException("localizeService Not Found");
 
-            localizeService.InitAsync().Wait();
+            localizeService.InitAsync().Wait(); 
 
             app.UseHttpCollector();
 
             app.UseMiddleware<DashboardMiddleware>();   
 
             return app;
+        }
+
+
+        public static IApplicationBuilder UseHttpReportsMigration(this IApplicationBuilder app)
+        {
+            ServiceContainer.provider = app.ApplicationServices.GetRequiredService<IServiceProvider>() ?? throw new ArgumentNullException("ServiceProvider Init Failed");
+
+            var storage = app.ApplicationServices.GetRequiredService<IHttpReportsStorage>() ?? throw new ArgumentNullException("Storage Not Found");
+
+            storage.PrintSQLAsync().Wait();
+
+            return app;
+        
         } 
- 
+
 
         private static IServiceCollection AddHandleService(this IServiceCollection services)
         {

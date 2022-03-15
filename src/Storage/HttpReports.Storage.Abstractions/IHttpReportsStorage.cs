@@ -1,8 +1,7 @@
 ﻿using HttpReports.Core;
 using HttpReports.Core.Models;
 using HttpReports.Core.StorageFilters;
-using HttpReports.Core.ViewModels;
-using HttpReports.Models;
+using HttpReports.Core.ViewModels; 
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,6 +13,8 @@ namespace HttpReports.Storage.Abstractions
     public interface IHttpReportsStorage
     {
         Task InitAsync();
+
+        Task PrintSQLAsync();
 
         Task AddRequestInfoAsync(RequestBag bag);
 
