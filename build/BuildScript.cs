@@ -102,7 +102,7 @@ namespace BuildScript
             foreach (var nugetPackage in nugetPackages)
             {
                 context.CoreTasks().NugetPush(nugetPackage)
-                    .ServerUrl("http://192.168.1.30:8003/api/v2/package")
+                    .ServerUrl("http://192.168.5.33:8003/api/v2/package")
                     .ApiKey(NugetKey)
                     .Execute(context);
             }
@@ -115,7 +115,7 @@ namespace BuildScript
             foreach (var nugetPackage in nugetPackages)
             {
                 context.CoreTasks().NugetPush(nugetPackage)
-                   .ServerUrl("http://192.168.1.30:8003")
+                   .ServerUrl("http://192.168.5.33:8003")
                     .ApiKey(NugetKey)
                     .Execute(context);
 
