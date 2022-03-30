@@ -184,7 +184,9 @@ export default {
           this.$http
             .get(`${basic.DOMAIN}/identity/getjwt/${this.username}/${this.password}`)
             .then((response) => {
-              localStorage.setItem("Authorization",response.body)
+              if(response.body.status){
+                 localStorage.setItem("Authorization",response.body.data)
+              }
             });
 
           localStorage.setItem("token", response.body.data);

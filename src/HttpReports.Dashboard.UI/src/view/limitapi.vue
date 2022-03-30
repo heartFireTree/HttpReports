@@ -1,6 +1,10 @@
 <template>
   <div>
-    <el-tabs style="margin-top: 10px" tab-position="top" @tab-click="handleClick">
+    <el-tabs
+      style="margin-top: 10px"
+      tab-position="top"
+      @tab-click="handleClick"
+    >
       <el-tab-pane label="接口限流">
         <el-card class="box-card">
           <el-row>
@@ -169,7 +173,7 @@
 </style>
 
 <script>
-import { basic } from '@/common/basic.js' 
+import { basic } from "@/common/basic.js";
 
 export default {
   data() {
@@ -186,7 +190,7 @@ export default {
         limit: 0,
         isEnable: true,
       },
-      ipWhite: "127.0.0.1",
+      ipWhite: "0.0.0.0",
     };
   },
   async mounted() {
@@ -210,8 +214,10 @@ export default {
       this.$http
         .get(`${basic.DOMAIN}/IpRateLimit/GetGeneralRulesByKey?key=${key}`)
         .then((data) => {
-          if (data.body) {
-            this.limitRule = data.body;
+          if (data.body.status) {
+            this.limitRule = data.body.data;
+          } else {
+            this.$message.error(data.body.message);
           }
         });
     },
@@ -224,10 +230,16 @@ export default {
     async save() {
       var self = this;
       self.$http
-        .post(`${basic.DOMAIN}/IpRateLimit/SyncSaveIpWhite?ipWhite=${self.ipWhite}`)
+        .post(
+          `${basic.DOMAIN}/IpRateLimit/SyncSaveIpWhite?ipWhite=${self.ipWhite}`
+        )
         .then((data) => {
-          self.$message({ message: "保存成功", type: "success" });
-          self.GetIpWhiteList();
+          if (data.body.status) {
+            self.$message({ message: "保存成功", type: "success" });
+            self.GetIpWhiteList();
+          } else {
+            this.$message.error(data.body.message);
+          }
         });
     },
     async deleteJob(key) {
@@ -242,17 +254,14 @@ export default {
           self.$http
             .post(`${basic.DOMAIN}/IpRateLimit/RemoveLimitRules?key=${key}`)
             .then((data) => {
-              if (data.body) {
+              if (data.body.status) {
                 self.$message({
                   type: "success",
                   message: self.$i18n.t("Monitor_DeleteSuccess"),
                 });
                 self.GetGeneralRules();
               } else {
-                self.$message({
-                  type: "error",
-                  message: "删除失败",
-                });
+                this.$message.error(data.body.message);
               }
             });
         });
@@ -263,19 +272,27 @@ export default {
         self.$http
           .post(`${basic.DOMAIN}/IpRateLimit/UpdateLimitRules`, self.limitRule)
           .then((data) => {
-            self.$message({ message: "保存成功", type: "success" });
-            self.GetGeneralRules();
-            self.dialogFormVisible = false;
-            self.resetForm();
+            if (data.body.status) {
+              self.$message({ message: "保存成功", type: "success" });
+              self.GetGeneralRules();
+              self.dialogFormVisible = false;
+              self.resetForm();
+            } else {
+              this.$message.error(data.body.message);
+            }
           });
       } else {
         self.$http
           .post(`${basic.DOMAIN}/IpRateLimit/AddLimitRules`, self.limitRule)
           .then((data) => {
-            self.$message({ message: "保存成功", type: "success" });
-            self.GetGeneralRules();
-            self.dialogFormVisible = false;
-            self.resetForm();
+            if (data.body.status) {
+              self.$message({ message: "保存成功", type: "success" });
+              self.GetGeneralRules();
+              self.dialogFormVisible = false;
+              self.resetForm();
+            } else {
+              this.$message.error(data.body.message);
+            }
           });
       }
     },
@@ -292,29 +309,41 @@ export default {
     },
     GetGeneralRules() {
       var self = this;
-      self.$http.get(`${basic.DOMAIN}/IpRateLimit/GetGeneralRules`).then((data) => {
-        var obj = data.body;
-        var res = [];
-        // self.tableData = data.body;
-        for (const key in obj) {
-          if (Object.hasOwnProperty.call(obj, key)) {
-            res.push(obj[key]);
-            ``;
+      self.$http
+        .get(`${basic.DOMAIN}/IpRateLimit/GetGeneralRules`)
+        .then((data) => {
+          if (data.body.status) {
+            var obj = data.body.data;
+            var res = [];
+            // self.tableData = data.body;
+            for (const key in obj) {
+              if (Object.hasOwnProperty.call(obj, key)) {
+                res.push(obj[key]);
+                ``;
+              }
+            }
+            self.tableData = res;
+          } else {
+            this.$message.error(data.body.message);
           }
-        }
-        self.tableData = res;
-      });
+        });
     },
     GetIpWhiteList() {
       var self = this;
-      self.$http.get(`${basic.DOMAIN}/IpRateLimit/GetIpWhiteList`).then((data) => {
-        self.ipWhite = data.body;
-      });
+      self.$http
+        .get(`${basic.DOMAIN}/IpRateLimit/GetIpWhiteList`)
+        .then((data) => {
+          if (data.body.status) {
+            self.ipWhite = data.body.data;
+          } else {
+            this.$message.error(data.body.message);
+          }
+        });
     },
-    handleClick(comp,event){
-      if(comp.index == 1){
+    handleClick(comp, event) {
+      if (comp.index == 1) {
         this.GetIpWhiteList();
-      }else{
+      } else {
         this.GetGeneralRules();
       }
     },
